@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Po Milion — Planer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #050d0a;
+  --surface: #0a1612;
+  --surf2:   #0f1f18;
+  --border:  #1a3328;
+  --accent:  #00e676;
+  --accent2: #00c853;
+  --dim:     #00a844;
+  --red:     #ef4444;
+  --text:    #d4f0e0;
+  --muted:   #3d6b55;
+  --xpgrad:  linear-gradient(90deg,#00e676,#00c853);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,230,118,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,230,118,.03) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;
+}
+/* scanline effect */
+body::after{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.08) 2px,rgba(0,0,0,.08) 4px);
+  pointer-events:none;z-index:0;
+}
+
+/* HEADER */
+header{
+  position:relative;z-index:10;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:.7rem 1rem;
+  display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;
+}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;white-space:nowrap;letter-spacing:-.01em;}
+.logo em{font-style:normal;color:var(--accent);text-shadow:0 0 12px rgba(0,230,118,.4);}
+.divider{width:1px;height:22px;background:var(--border);flex-shrink:0;}
+.xp-header{flex:1;display:flex;align-items:center;gap:.6rem;min-width:0;}
+.level-badge{
+  font-family:'JetBrains Mono',monospace;font-weight:500;font-size:.65rem;
+  letter-spacing:.1em;padding:.22rem .55rem;
+  background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:2px;
+  white-space:nowrap;flex-shrink:0;text-shadow:0 0 8px rgba(0,230,118,.5);
+}
+.xp-track{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;min-width:40px;}
+.xp-fill{height:100%;background:var(--xpgrad);border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 0 8px rgba(0,230,118,.4);}
+.xp-label{font-size:.58rem;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.nav-tabs{display:flex;gap:.2rem;flex-shrink:0;}
+.tab-btn{
+  font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.1em;
+  text-transform:uppercase;padding:.35rem .7rem;border:1px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;border-radius:2px;transition:all .15s;
+}
+.tab-btn.active{background:transparent;border-color:var(--accent);color:var(--accent);
+  text-shadow:0 0 8px rgba(0,230,118,.4);}
+.tab-btn:hover:not(.active){border-color:var(--dim);color:var(--dim);}
+.header-btns{display:flex;gap:.3rem;flex-shrink:0;}
+.hbtn{
+  font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.06em;
+  padding:.35rem .65rem;border:1px solid var(--border);background:transparent;
+  color:var(--muted);cursor:pointer;border-radius:2px;transition:all .15s;white-space:nowrap;
+}
+.hbtn:hover{color:var(--text);border-color:var(--muted);}
+.hbtn.green{border-color:var(--dim);color:var(--dim);}
+.hbtn.green:hover{border-color:var(--accent);color:var(--accent);}
+
+/* MAIN */
+main{position:relative;z-index:1;padding:1rem;max-width:680px;margin:0 auto;}
+
+.date-nav{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;}
+.date-nav button.arrow{
+  background:var(--surface);border:1px solid var(--border);color:var(--muted);
+  width:28px;height:28px;border-radius:2px;cursor:pointer;font-size:.9rem;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;
+}
+.date-nav button.arrow:hover{border-color:var(--accent);color:var(--accent);}
+.date-label{font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;flex:1;color:var(--text);}
+.today-btn{
+  font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.1em;
+  text-transform:uppercase;padding:.26rem .55rem;background:none;
+  border:1px solid var(--border);border-radius:2px;color:var(--muted);cursor:pointer;transition:all .15s;
+}
+.today-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+.view{display:none;} .view.active{display:block;}
+
+/* PANELS */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:3px;overflow:hidden;margin-bottom:.85rem;}
+.panel-header{
+  padding:.52rem .85rem;background:var(--surf2);border-bottom:1px solid var(--border);
+  font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.panel-header .accent{color:var(--accent);font-weight:500;}
+
+/* LEVEL CARD */
+.level-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:3px;
+  padding:.9rem 1rem;text-align:center;position:relative;overflow:hidden;margin-bottom:.85rem;
+}
+.level-card::before{
+  content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;
+  background:radial-gradient(circle,rgba(0,230,118,.08),transparent 70%);pointer-events:none;
+}
+.level-title{font-size:.52rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem;}
+.level-row{display:flex;align-items:baseline;justify-content:center;gap:.35rem;margin-bottom:.1rem;}
+.level-num{
+  font-family:'JetBrains Mono',monospace;font-weight:500;font-size:3rem;
+  line-height:1;color:var(--accent);letter-spacing:-.02em;
+  text-shadow:0 0 20px rgba(0,230,118,.35);
+}
+.level-max{font-size:.68rem;color:var(--muted);align-self:flex-end;padding-bottom:.35rem;}
+.level-name{
+  font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--accent);
+  margin-bottom:.75rem;letter-spacing:.08em;text-shadow:0 0 10px rgba(0,230,118,.3);
+}
+.xp-bar-big{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:.35rem;}
+.xp-bar-fill{
+  height:100%;background:var(--xpgrad);border-radius:3px;
+  transition:width .6s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 0 10px rgba(0,230,118,.35);
+}
+.xp-nums{font-size:.57rem;color:var(--muted);display:flex;justify-content:space-between;}
+.xp-nums strong{color:var(--accent);}
+.milestone-row{display:flex;gap:.22rem;margin-top:.65rem;flex-wrap:wrap;justify-content:center;}
+.milestone{
+  font-size:.48rem;padding:.1rem .32rem;border:1px solid var(--border);
+  border-radius:2px;color:var(--muted);transition:all .25s;
+}
+.milestone.reached{
+  border-color:var(--accent);color:var(--accent);
+  background:rgba(0,230,118,.07);text-shadow:0 0 6px rgba(0,230,118,.3);
+}
+.xp-log{
+  margin-top:.65rem;border-top:1px solid var(--border);padding-top:.5rem;
+  font-size:.56rem;color:var(--muted);text-align:left;max-height:88px;overflow-y:auto;
+}
+.xp-log-item{display:flex;justify-content:space-between;padding:.1rem 0;border-bottom:1px solid rgba(0,230,118,.04);}
+.gain-pos{color:var(--accent);}
+.gain-neg{color:var(--red);}
+
+/* TASKS */
+.task-list{padding:.35rem;}
+.task-item{
+  display:flex;align-items:flex-start;gap:.45rem;
+  padding:.35rem .25rem;border-bottom:1px solid var(--border);
+  animation:slideIn .18s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.task-item:last-child{border-bottom:none;}
+.task-check{
+  width:15px;height:15px;border:1px solid var(--muted);border-radius:2px;
+  cursor:pointer;flex-shrink:0;margin-top:2px;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;
+}
+.task-check.done{background:var(--accent2);border-color:var(--accent2);box-shadow:0 0 6px rgba(0,230,118,.3);}
+.task-check.done::after{content:'✓';font-size:.55rem;color:#000;font-weight:700;}
+.task-text{font-size:.7rem;flex:1;line-height:1.4;transition:all .15s;word-break:break-word;color:var(--text);}
+.task-text.done{text-decoration:line-through;color:var(--muted);}
+.task-xp{font-size:.56rem;color:var(--accent);flex-shrink:0;margin-top:3px;min-width:34px;text-align:right;}
+.task-del{cursor:pointer;color:var(--muted);font-size:.68rem;flex-shrink:0;margin-top:2px;opacity:.4;transition:all .15s;}
+.task-item:hover .task-del{opacity:.8;}
+.task-del:hover{color:var(--red);opacity:1;}
+
+.task-add-row{display:flex;gap:.3rem;padding:.5rem;border-top:1px solid var(--border);align-items:center;}
+.task-input{
+  flex:1;font-family:'JetBrains Mono',monospace;font-size:.67rem;
+  padding:.35rem .5rem;border:1px solid var(--border);border-radius:2px;
+  background:var(--bg);color:var(--text);min-width:0;
+}
+.task-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 1px rgba(0,230,118,.15);}
+.task-input::placeholder{color:var(--muted);}
+.xp-select{
+  font-family:'JetBrains Mono',monospace;font-size:.6rem;
+  padding:.35rem .3rem;border:1px solid var(--border);border-radius:2px;
+  background:var(--bg);color:var(--accent);cursor:pointer;width:64px;flex-shrink:0;
+}
+.task-add-btn{
+  padding:.35rem .65rem;background:transparent;color:var(--accent);
+  border:1px solid var(--accent);border-radius:2px;cursor:pointer;font-size:.9rem;font-weight:700;
+  flex-shrink:0;transition:all .15s;
+}
+.task-add-btn:hover{background:var(--accent);color:#000;}
+
+/* NOTES */
+.notes-area{
+  width:100%;min-height:100px;font-family:'JetBrains Mono',monospace;
+  font-size:.67rem;line-height:1.9;padding:.7rem;border:none;resize:vertical;
+  background:var(--surface);color:var(--text);
+  background-image:repeating-linear-gradient(transparent,transparent 28px,var(--border) 28px,var(--border) 29px);
+  background-position:0 .7rem;
+}
+.notes-area:focus{outline:none;}
+.notes-area::placeholder{color:var(--muted);}
+
+/* QUOTE */
+.quote-bar{
+  border-left:2px solid var(--accent);padding:.5rem .8rem;margin-bottom:.85rem;
+  background:rgba(0,230,118,.04);border-radius:0 3px 3px 0;
+}
+.quote-text{font-size:.65rem;color:var(--accent);line-height:1.6;font-style:italic;opacity:.85;}
+.quote-author{font-size:.52rem;color:var(--muted);margin-top:.25rem;}
+
+/* WEEKLY */
+.weekly-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.5rem;}
+@media(max-width:600px){.weekly-grid{grid-template-columns:repeat(2,1fr);}}
+.day-col{background:var(--surface);border:1px solid var(--border);border-radius:3px;overflow:hidden;}
+.day-col.today-col{border-color:var(--accent);box-shadow:0 0 0 1px rgba(0,230,118,.15);}
+.day-header{padding:.42rem .5rem;background:var(--surf2);border-bottom:1px solid var(--border);text-align:center;}
+.day-name{font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+.day-num{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;line-height:1.1;color:var(--text);}
+.today-col .day-num{color:var(--accent);text-shadow:0 0 10px rgba(0,230,118,.3);}
+.day-xp{font-size:.5rem;color:var(--accent);}
+.day-tasks{padding:.35rem;min-height:120px;}
+.day-task{
+  font-size:.62rem;padding:.16rem .28rem;margin-bottom:.16rem;
+  border-left:2px solid var(--dim);background:rgba(0,230,118,.04);
+  display:flex;gap:.28rem;align-items:flex-start;border-radius:0 2px 2px 0;
+}
+.day-task.done-t{border-color:var(--muted);opacity:.45;text-decoration:line-through;}
+.day-task input[type=checkbox]{accent-color:var(--accent);flex-shrink:0;margin-top:2px;}
+.day-task-del{cursor:pointer;color:var(--muted);font-size:.6rem;margin-left:auto;flex-shrink:0;opacity:.3;}
+.day-task-del:hover{color:var(--red);opacity:1;}
+.day-add{display:flex;gap:.2rem;padding:.26rem .32rem;border-top:1px solid var(--border);}
+.day-add input{
+  flex:1;font-family:'JetBrains Mono',monospace;font-size:.58rem;
+  padding:.2rem .26rem;border:1px solid var(--border);border-radius:2px;
+  background:var(--bg);color:var(--text);min-width:0;
+}
+.day-add input:focus{outline:none;border-color:var(--accent);}
+.day-add input::placeholder{color:var(--muted);}
+.day-add button{
+  font-size:.68rem;font-weight:700;padding:.2rem .4rem;
+  background:transparent;color:var(--accent);border:1px solid var(--dim);
+  border-radius:2px;cursor:pointer;flex-shrink:0;transition:all .15s;
+}
+.day-add button:hover{background:var(--accent);color:#000;}
+
+/* LEVELUP OVERLAY */
+#levelUpOverlay{
+  position:fixed;inset:0;z-index:200;display:none;
+  align-items:center;justify-content:center;
+  background:rgba(5,13,10,.92);backdrop-filter:blur(6px);
+}
+#levelUpOverlay.show{display:flex;}
+.levelup-box{
+  background:var(--surface);border:1px solid var(--accent);
+  border-radius:4px;padding:2rem 2.5rem;text-align:center;
+  animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 0 40px rgba(0,230,118,.2);
+}
+@keyframes popIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.lu-title{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:.4rem;}
+.lu-num{
+  font-family:'JetBrains Mono',monospace;font-weight:500;font-size:4.5rem;
+  color:var(--accent);line-height:1;text-shadow:0 0 30px rgba(0,230,118,.5);
+}
+.lu-name{font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--text);margin:.25rem 0 1.1rem;letter-spacing:.06em;}
+.lu-close{
+  font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.1em;
+  text-transform:uppercase;padding:.45rem 1.4rem;background:transparent;
+  color:var(--accent);border:1px solid var(--accent);border-radius:2px;cursor:pointer;
+  transition:all .15s;
+}
+.lu-close:hover{background:var(--accent);color:#000;}
+
+/* BACKUP MODAL */
+#backupModal{
+  position:fixed;inset:0;z-index:200;display:none;
+  align-items:center;justify-content:center;
+  background:rgba(5,13,10,.92);backdrop-filter:blur(6px);
+}
+#backupModal.show{display:flex;}
+.backup-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:4px;padding:1.5rem;width:min(90vw,420px);
+  animation:popIn .25s ease;
+}
+.backup-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;margin-bottom:1rem;color:var(--text);}
+.backup-btn{
+  display:block;width:100%;text-align:left;
+  font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.06em;
+  padding:.55rem .8rem;border:1px solid var(--border);border-radius:2px;
+  background:transparent;color:var(--text);cursor:pointer;margin-bottom:.5rem;transition:all .15s;
+}
+.backup-btn:hover{border-color:var(--accent);color:var(--accent);}
+.backup-btn.danger:hover{border-color:var(--red);color:var(--red);}
+.backup-sep{height:1px;background:var(--border);margin:.6rem 0;}
+.backup-close{
+  font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.08em;
+  text-transform:uppercase;padding:.38rem .8rem;background:transparent;
+  color:var(--muted);border:1px solid var(--border);border-radius:2px;cursor:pointer;transition:all .15s;
+}
+.backup-close:hover{color:var(--text);}
+#restoreInput{display:none;}
+
+/* TOAST */
+#toast{
+  position:fixed;bottom:1.2rem;right:1.2rem;
+  background:var(--surface);border:1px solid var(--accent);
+  color:var(--accent);font-size:.63rem;padding:.52rem .85rem;
+  border-radius:2px;opacity:0;transform:translateY(8px);
+  transition:all .22s;z-index:300;pointer-events:none;max-width:260px;
+  box-shadow:0 0 16px rgba(0,230,118,.15);
+}
+#toast.show{opacity:1;transform:translateY(0);}
+#toast.err{border-color:var(--red);color:var(--red);}
+
+/* PRINT */
+@media print{
+  body{background:#fff;color:#000;}
+  body::before,body::after{display:none;}
+  header .header-btns,.date-nav button,.today-btn,.task-add-row,.day-add,.task-del,.day-task-del,
+  .xp-log,.quote-bar,#toast,#levelUpOverlay,#backupModal{display:none!important;}
+  main{padding:0;max-width:100%;}
+  .panel,.day-col,.level-card{border:1px solid #ccc;background:#fff;}
+  .panel-header,.day-header{background:#f5f5f5;color:#333;}
+  .view{display:none!important;} .view.active{display:block!important;}
+  .weekly-grid{grid-template-columns:repeat(7,1fr)!important;gap:.4rem;}
+  .day-tasks{min-height:160px;}
+  .level-card::before{display:none;}
+  @page{margin:1cm;size:A4 landscape;}
+}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div id="levelUpOverlay">
+  <div class="levelup-box">
+    <div class="lu-title">// LEVEL UP</div>
+    <div class="lu-num" id="luNum">2</div>
+    <div class="lu-name" id="luName">Starter</div>
+    <button class="lu-close" onclick="closeLevelUp()">[ Naprzód ]</button>
+  </div>
+</div>
+
+<div id="backupModal">
+  <div class="backup-box">
+    <div class="backup-title">Backup danych</div>
+    <button class="backup-btn" onclick="exportData()">⬇ Pobierz kopię (.json)</button>
+    <button class="backup-btn" onclick="document.getElementById('restoreInput').click()">⬆ Wczytaj kopię (.json)</button>
+    <input type="file" id="restoreInput" accept=".json" onchange="importData(event)">
+    <div class="backup-sep"></div>
+    <button class="backup-btn danger" onclick="confirmReset()">⚠ Resetuj wszystkie dane</button>
+    <div class="backup-sep"></div>
+    <button class="backup-close" onclick="closeBackup()">Zamknij</button>
+  </div>
+</div>
+
+<header>
+  <div class="logo">Po <em>Milion</em></div>
+  <div class="divider"></div>
+  <div class="xp-header">
+    <div class="level-badge" id="headerLvl">LV 1</div>
+    <div class="xp-track"><div class="xp-fill" id="headerXpFill" style="width:0%"></div></div>
+    <div class="xp-label" id="headerXpLabel">0 XP</div>
+  </div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchView('daily')">Dzień</button>
+    <button class="tab-btn" onclick="switchView('weekly')">Tydzień</button>
+  </div>
+  <div class="header-btns">
+    <button class="hbtn green" onclick="openBackup()">💾 Backup</button>
+    <button class="hbtn" onclick="window.print()">⎙</button>
+  </div>
+</header>
+
+<main>
+  <div class="date-nav">
+    <button class="arrow" onclick="navigate(-1)">‹</button>
+    <div class="date-label" id="dateLabel"></div>
+    <button class="arrow" onclick="navigate(1)">›</button>
+    <button class="today-btn" onclick="goToday()">Dziś</button>
+  </div>
+
+  <!-- DAILY -->
+  <div class="view active" id="view-daily">
+
+    <div class="quote-bar" id="quoteBar"></div>
+
+    <div class="level-card">
+      <div class="level-title">// poziom gracza</div>
+      <div class="level-row">
+        <div class="level-num" id="levelNum">1</div>
+        <div class="level-max">/ 100</div>
+      </div>
+      <div class="level-name" id="levelName">Nowicjusz</div>
+      <div class="xp-bar-big"><div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div></div>
+      <div class="xp-nums">
+        <span><strong id="xpCurrent">0</strong> XP</span>
+        <span id="xpNext"></span>
+      </div>
+      <div class="milestone-row" id="milestoneRow"></div>
+      <div class="xp-log" id="xpLog"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span>// zadania dnia</span>
+        <span class="accent" id="taskCount">0/0</span>
+      </div>
+      <div class="task-list" id="taskList"></div>
+      <div class="task-add-row">
+        <input class="task-input" id="taskInput" placeholder="Nowe zadanie…" onkeydown="if(event.key==='Enter') addTask()">
+        <select class="xp-select" id="xpSelect">
+          <option value="10">+10 XP</option>
+          <option value="20" selected>+20 XP</option>
+          <option value="50">+50 XP</option>
+          <option value="100">+100 XP</option>
+        </select>
+        <button class="task-add-btn" onclick="addTask()">+</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span>// notatki</span></div>
+      <textarea class="notes-area" id="notesArea" placeholder="Notatki, pomysły, refleksje…" oninput="saveNotes()"></textarea>
+    </div>
+
+  </div>
+
+  <!-- WEEKLY -->
+  <div class="view" id="view-weekly">
+    <div class="weekly-grid" id="weeklyGrid"></div>
+  </div>
+</main>
+
+<script>
+// ── QUOTES ──
+const QUOTES=[
+  {text:'"Nie wznosisz się do poziomu swoich celów. Spadasz do poziomu swoich systemów."',author:'James Clear, Atomowe Nawyki'},
+  {text:'"Małe kroki powtarzane każdego dnia prowadzą do wielkich zmian."',author:''},
+  {text:'"Najlepszy czas na zasadzenie drzewa był 20 lat temu. Drugi najlepszy — teraz."',author:'Przysłowie chińskie'},
+  {text:'"Twoja przyszłość jest tworzona przez to, co robisz dziś, a nie jutro."',author:'Robert Kiyosaki'},
+  {text:'"Sukces to suma małych wysiłków, powtarzanych dzień po dniu."',author:'Robert Collier'},
+  {text:'"Zainwestuj w siebie. To zwraca się najlepiej."',author:'Benjamin Franklin'},
+  {text:'"Milion zaczyna się od pierwszego złotego."',author:''},
+];
+function renderQuote(){
+  const q=QUOTES[new Date().getDay()%QUOTES.length];
+  document.getElementById('quoteBar').innerHTML=
+    `<div class="quote-text">${q.text}</div>${q.author?`<div class="quote-author">— ${q.author}</div>`:''}`;
+}
+
+// ── XP CURVE ──
+function buildLevels(){
+  const lvs=[];let cum=0;
+  for(let lv=1;lv<=100;lv++){
+    lvs.push({lv,xpRequired:cum});
+    cum+=lv<100?Math.floor(18*Math.pow(lv,1.8)):999999;
+  }
+  return lvs;
+}
+const LEVELS=buildLevels();
+const LEVEL_NAMES={1:'Nowicjusz',5:'Amator',10:'Praktyk',15:'Konsekwentny',20:'Budowniczy',
+  25:'Myśliciel',30:'Strateg',40:'Inwestor',50:'Przedsiębiorca',60:'Wizjoner',
+  70:'Lider',80:'Ekspert',90:'Mistrz',100:'💰 Milioner'};
+function getLevelName(lv){
+  let n='Nowicjusz';
+  for(const[k,v] of Object.entries(LEVEL_NAMES)) if(parseInt(k)<=lv) n=v;
+  return n;
+}
+const MILESTONE_LVS=[10,20,30,50,75,100];
+
+const DAYS=['Nd','Pn','Wt','Śr','Cz','Pt','Sb'];
+const MONTHS=['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+
+let currentDate=new Date();
+let currentView='daily';
+
+function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function getData(k){try{return JSON.parse(localStorage.getItem(k))||null;}catch{return null;}}
+function setData(k,v){localStorage.setItem(k,JSON.stringify(v));}
+
+// ── XP ──
+function getTotalXP(){return getData('xp_total')||0;}
+function setTotalXP(v){setData('xp_total',v);}
+function getLevelInfo(xp){
+  let lv=1;
+  for(let i=LEVELS.length-1;i>=0;i--) if(xp>=LEVELS[i].xpRequired){lv=LEVELS[i].lv;break;}
+  lv=Math.min(lv,100);
+  const curReq=LEVELS[lv-1].xpRequired;
+  const nextReq=lv<100?LEVELS[lv].xpRequired:LEVELS[99].xpRequired+1;
+  const progress=lv===100?100:Math.round(((xp-curReq)/(nextReq-curReq))*100);
+  return{lv,name:getLevelName(lv),progress,xpInLevel:xp-curReq,xpNeeded:nextReq-curReq};
+}
+function addXP(amount,label){
+  amount=parseInt(amount)||0;
+  const prev=getLevelInfo(getTotalXP());
+  setTotalXP(getTotalXP()+amount);
+  logXP(label,amount);updateXPUI();showToast(`+${amount} XP — ${label}`);
+  const cur=getLevelInfo(getTotalXP());
+  if(cur.lv>prev.lv) setTimeout(()=>showLevelUp(cur.lv,cur.name),400);
+}
+function removeXP(amount,label){
+  amount=parseInt(amount)||0;
+  setTotalXP(Math.max(0,getTotalXP()-amount));
+  logXP(`[cofnięto] ${label}`,-amount);updateXPUI();showToast(`-${amount} XP — cofnięto`);
+}
+function logXP(label,amount){
+  const log=getData('xp_log')||[];
+  log.unshift({label,amount,date:dateKey(currentDate)});
+  if(log.length>30) log.pop();
+  setData('xp_log',log);
+}
+function updateXPUI(){
+  const xp=getTotalXP();const info=getLevelInfo(xp);
+  document.getElementById('levelNum').textContent=info.lv;
+  document.getElementById('levelName').textContent=info.name;
+  document.getElementById('xpCurrent').textContent=xp.toLocaleString('pl');
+  document.getElementById('xpNext').textContent=info.lv<100
+    ?`${info.xpInLevel} / ${info.xpNeeded} → LV${info.lv+1}`:'// MAX';
+  document.getElementById('xpBarFill').style.width=info.progress+'%';
+  document.getElementById('headerLvl').textContent='LV '+info.lv;
+  document.getElementById('headerXpFill').style.width=info.progress+'%';
+  document.getElementById('headerXpLabel').textContent=xp.toLocaleString('pl')+' XP';
+  document.getElementById('milestoneRow').innerHTML=MILESTONE_LVS.map(m=>
+    `<div class="milestone ${info.lv>=m?'reached':''}">LV${m}</div>`).join('');
+  const log=getData('xp_log')||[];
+  document.getElementById('xpLog').innerHTML=log.slice(0,8).map(l=>
+    `<div class="xp-log-item"><span>${esc(l.label)}</span><span class="${l.amount>=0?'gain-pos':'gain-neg'}">${l.amount>=0?'+':''}${l.amount}</span></div>`
+  ).join('')||'<div style="color:var(--muted)">Ukończ zadania, by zdobyć XP</div>';
+}
+function showLevelUp(lv,name){
+  document.getElementById('luNum').textContent=lv;
+  document.getElementById('luName').textContent=name;
+  document.getElementById('levelUpOverlay').classList.add('show');
+}
+function closeLevelUp(){document.getElementById('levelUpOverlay').classList.remove('show');}
+
+// ── BACKUP / RESTORE ──
+function openBackup(){document.getElementById('backupModal').classList.add('show');}
+function closeBackup(){document.getElementById('backupModal').classList.remove('show');}
+
+function exportData(){
+  const data={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    data[k]=localStorage.getItem(k);
+  }
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`po-milion-backup-${dateKey(new Date())}.json`;
+  a.click();URL.revokeObjectURL(url);
+  showToast('Kopia zapisana ✓');closeBackup();
+}
+
+function importData(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(confirm('Wczytanie kopii nadpisze obecne dane. Kontynuować?')){
+        localStorage.clear();
+        Object.entries(data).forEach(([k,v])=>localStorage.setItem(k,v));
+        showToast('Dane wczytane ✓');closeBackup();render();
+      }
+    }catch{showToast('Błąd — nieprawidłowy plik',true);}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+function confirmReset(){
+  if(confirm('Na pewno usunąć WSZYSTKIE dane? Tego nie można cofnąć.')){
+    localStorage.clear();render();showToast('Dane zresetowane');closeBackup();
+  }
+}
+
+// ── TOAST ──
+function showToast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.toggle('err',err);
+  t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+// ── NAV ──
+function navigate(dir){
+  if(currentView==='daily') currentDate.setDate(currentDate.getDate()+dir);
+  else currentDate.setDate(currentDate.getDate()+dir*7);
+  render();
+}
+function goToday(){currentDate=new Date();render();}
+function switchView(v){
+  currentView=v;
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>
+    b.classList.toggle('active',(i===0&&v==='daily')||(i===1&&v==='weekly')));
+  render();
+}
+
+function render(){
+  updateDateLabel();updateXPUI();renderQuote();
+  if(currentView==='daily') renderDaily();
+  else renderWeekly();
+}
+function updateDateLabel(){
+  const d=currentDate;
+  const isToday=dateKey(d)===dateKey(new Date());
+  if(currentView==='daily'){
+    document.getElementById('dateLabel').textContent=
+      (isToday?'// dziś — ':'')+DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear();
+  }else{
+    const w=getWeekDays(currentDate);
+    document.getElementById('dateLabel').textContent=
+      w[0].getDate()+' – '+w[6].getDate()+' '+MONTHS[w[0].getMonth()]+' '+w[0].getFullYear();
+  }
+}
+function renderDaily(){renderTasks();renderNotes();}
+
+// TASKS
+function renderTasks(){
+  const key='tasks_'+dateKey(currentDate);
+  const tasks=getData(key)||[];
+  const done=tasks.filter(t=>t.done).length;
+  document.getElementById('taskCount').textContent=done+'/'+tasks.length;
+  const list=document.getElementById('taskList');list.innerHTML='';
+  tasks.forEach((t,i)=>{
+    const xp=parseInt(t.xp)||0;
+    const item=document.createElement('div');item.className='task-item';
+    item.innerHTML=`
+      <div class="task-check ${t.done?'done':''}" onclick="toggleTask(${i})"></div>
+      <div class="task-text ${t.done?'done':''}">${esc(t.text)}</div>
+      <div class="task-xp">+${xp}</div>
+      <div class="task-del" onclick="deleteTask(${i})">✕</div>`;
+    list.appendChild(item);
+  });
+}
+function addTask(){
+  const input=document.getElementById('taskInput');
+  const xpSel=document.getElementById('xpSelect');
+  const val=input.value.trim();if(!val)return;
+  const key='tasks_'+dateKey(currentDate);
+  const tasks=getData(key)||[];
+  tasks.push({text:val,done:false,xp:parseInt(xpSel.value)});
+  setData(key,tasks);input.value='';renderTasks();
+}
+function toggleTask(i){
+  const key='tasks_'+dateKey(currentDate);
+  const tasks=getData(key)||[];
+  const xp=parseInt(tasks[i].xp)||0;
+  if(!tasks[i].done){tasks[i].done=true;addXP(xp,tasks[i].text.slice(0,30));}
+  else{removeXP(xp,tasks[i].text.slice(0,30));tasks[i].done=false;}
+  setData(key,tasks);renderTasks();
+}
+function deleteTask(i){
+  const key='tasks_'+dateKey(currentDate);
+  const tasks=getData(key)||[];
+  const t=tasks[i];const xp=parseInt(t.xp)||0;
+  if(t.done) removeXP(xp,t.text.slice(0,30));
+  tasks.splice(i,1);setData(key,tasks);renderTasks();
+}
+
+// NOTES
+function renderNotes(){
+  document.getElementById('notesArea').value=getData('notes_'+dateKey(currentDate))||'';
+}
+function saveNotes(){setData('notes_'+dateKey(currentDate),document.getElementById('notesArea').value);}
+
+// WEEKLY
+function getWeekDays(d){
+  const day=d.getDay();
+  const mon=new Date(d);mon.setDate(d.getDate()-((day+6)%7));
+  return Array.from({length:7},(_,i)=>{const x=new Date(mon);x.setDate(mon.getDate()+i);return x;});
+}
+function renderWeekly(){
+  const grid=document.getElementById('weeklyGrid');
+  const days=getWeekDays(currentDate);
+  const today=dateKey(new Date());
+  grid.innerHTML='';
+  days.forEach(d=>{
+    const key='tasks_'+dateKey(d);
+    const tasks=getData(key)||[];
+    const isToday=dateKey(d)===today;
+    const dayXP=tasks.filter(t=>t.done).reduce((s,t)=>s+(parseInt(t.xp)||0),0);
+    const col=document.createElement('div');
+    col.className='day-col'+(isToday?' today-col':'');
+    col.innerHTML=`
+      <div class="day-header">
+        <div class="day-name">${DAYS[d.getDay()]}</div>
+        <div class="day-num">${d.getDate()}</div>
+        ${dayXP>0?`<div class="day-xp">+${dayXP}</div>`:''}
+      </div>
+      <div class="day-tasks">
+        ${tasks.map((t,i)=>`
+          <div class="day-task ${t.done?'done-t':''}">
+            <input type="checkbox" ${t.done?'checked':''} onchange="toggleWeekTask('${dateKey(d)}',${i},this.checked)">
+            <span>${esc(t.text)}</span>
+            <span class="day-task-del" onclick="deleteWeekTask('${dateKey(d)}',${i})">✕</span>
+          </div>`).join('')}
+      </div>
+      <div class="day-add">
+        <input placeholder="Dodaj…" id="wi_${dateKey(d)}" onkeydown="if(event.key==='Enter') addWeekTask('${dateKey(d)}')">
+        <button onclick="addWeekTask('${dateKey(d)}')">+</button>
+      </div>`;
+    grid.appendChild(col);
+  });
+}
+function addWeekTask(dk){
+  const input=document.getElementById('wi_'+dk);
+  const val=input.value.trim();if(!val)return;
+  const tasks=getData('tasks_'+dk)||[];
+  tasks.push({text:val,done:false,xp:20});
+  setData('tasks_'+dk,tasks);input.value='';renderWeekly();
+}
+function toggleWeekTask(dk,i,checked){
+  const tasks=getData('tasks_'+dk)||[];
+  const xp=parseInt(tasks[i].xp)||0;
+  if(checked&&!tasks[i].done){tasks[i].done=true;addXP(xp,tasks[i].text.slice(0,30));}
+  else if(!checked&&tasks[i].done){tasks[i].done=false;removeXP(xp,tasks[i].text.slice(0,30));}
+  else tasks[i].done=checked;
+  setData('tasks_'+dk,tasks);renderWeekly();
+}
+function deleteWeekTask(dk,i){
+  const tasks=getData('tasks_'+dk)||[];
+  const t=tasks[i];const xp=parseInt(t.xp)||0;
+  if(t.done) removeXP(xp,t.text.slice(0,30));
+  tasks.splice(i,1);setData('tasks_'+dk,tasks);renderWeekly();
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+render();
+</script>
+</body>
+</html>
